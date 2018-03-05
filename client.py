@@ -68,16 +68,19 @@ if __name__ == '__main__':
 	group = parser.add_mutually_exclusive_group()
 	parser.add_argument("-IP", help="IP Address", default=None)
 	parser.add_argument("-port", help="Port", default=None)
-	group.add_argument("scan", help="turn on scan mode", action="store_true", default=False)
-	group.add_argument("chat", help="turn on chat mode", action="store_true", default=False)
+	group.add_argument("-scan", help="turn on scan mode", action="store_true", default=False)
+	group.add_argument("-chat", help="turn on chat mode", action="store_true", default=False)
 	args = parser.parse_args()
+
+	if not args.scan and args.chat:
+		args.chat = True
 
 	if args.chat:
 		argLen = len(sys.argv)
 		if argLen == 1:
 			IPAddress = getValidIP()
 			port = getValidPort()
-		elif args.IP is None or args.port is None:
+		elif (args.IP is None or args.port is None) and not (args.IP is None and args.port is None):
 			print "Both IP and Port must be given together"
 			IPAddress = getValidIP()
 			port = getValidPort()
@@ -114,18 +117,22 @@ if __name__ == '__main__':
 			print "Shutdown"
 			exit(1)
 
-		print "Scanning..."
-    	start_time = datetime.now()
-    	conf.verb = 0
-    	ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/AP(pdst = IPAddress), timeout = 2, iface=interface, inter=0.1)
+		try:
+			print "Scanning..."
+			start_time = datetime.now()
+			conf.verb = 0
+			ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst = IPAddress), timeout = 2, iface=interface, inter=0.1)
 
-    	print "MAC - IP\n"
-    	for snd, rcv in ans:
-    		print rcv.sprintf(r"%Ether.src% = %ARP.psrc%")
-    	stop_time = datetime.now()
-    	total_time = stop_time-start_time
-    	print "\n Scan Complete"
-    	print ("Scan Duration: %s" %(total_time))
+			print "MAC - IP\n"
+			for snd, rcv in ans:
+				print rcv.sprintf(r"%Ether.src% = %ARP.psrc%")
+			stop_time = datetime.now()
+			total_time = stop_time-start_time
+			print "\n Scan Complete"
+			print ("Scan Duration: %s" %(total_time))
+		except:
+			print "Error"
+			exit(1)
 
 try:
 	server.close()
